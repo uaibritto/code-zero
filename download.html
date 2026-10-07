@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Zero — Download</title>
+<style>
+  :root{--bg:#0D0D0D;--surface:#1C1C1C;--fg:#E7E3DB;--dim:#848380;--accent:#ff7a1a;--line:#2a2a2a}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;display:flex;justify-content:center;padding:40px 20px}
+  .wrap{width:100%;max-width:680px}
+  h1{font-weight:600;font-size:1.6rem;margin:0 0 4px}
+  .sub{color:var(--dim);margin:0 0 28px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:16px}
+  .card h2{font-size:1.05rem;font-weight:600;margin:0 0 6px}
+  .card p{color:var(--dim);font-size:.9rem;margin:0 0 16px}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:11px 20px;font-weight:600;transition:filter .15s,border-color .15s}
+  button:disabled{opacity:.5;cursor:default}
+  .primary{background:var(--accent);color:#0D0D0D}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+  .ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .primary:hover{filter:brightness(1.07)}
+  .status{font-size:.85rem;color:var(--dim);margin-top:14px;min-height:1.3em;white-space:pre-wrap}
+  .status.err{color:#e3796f}
+  .status.ok{color:#6fbd72}
+  code{background:#000;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:.85em}
+  ol{margin:0;padding-left:20px;color:var(--dim);font-size:.9rem}
+  ol li{margin-bottom:4px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Code Zero — Full Snack Dev</h1>
+  <p class="sub">Baixe o código-fonte do curso.</p>
+
+  <div class="card">
+    <h2>📦 Projeto completo (.zip)</h2>
+    <p>Todos os arquivos na estrutura de pastas, pronto para subir no GitHub. O .zip é montado aqui no navegador.</p>
+    <button class="primary" id="btnZip">⬇ Baixar projeto.zip</button>
+    <div class="status" id="stZip"></div>
+  </div>
+
+  <div class="card">
+    <h2>📄 Arquivo único (standalone.html)</h2>
+    <p>O curso inteiro embutido em um só arquivo HTML. Funciona offline, sem servidor. Também serve como <code>index.html</code> para deploy em um arquivo só.</p>
+    <button class="ghost" id="btnStd">⬇ Baixar standalone.html</button>
+    <div class="status" id="stStd"></div>
+  </div>
+
+  <div class="card">
+    <h2>🚀 Publicar no GitHub Pages</h2>
+    <ol>
+      <li>Suba os arquivos do .zip em um repositório, no branch <code>main</code>.</li>
+      <li>No repositório: <b>Settings → Pages</b>.</li>
+      <li><b>Source</b>: escolha <i>Deploy from a branch</i> → <code>main</code> / <code>/ (root)</code>.</li>
+      <li>Em ~1 min o site fica em <code>https://SEU-USUARIO.github.io/SEU-REPO/</code>.</li>
+    </ol>
+    <p style="margin-top:12px">O .zip já inclui <code>.nojekyll</code> e um workflow em <code>.github/workflows/deploy.yml</code> (deploy automático via GitHub Actions, se preferir <b>Source: GitHub Actions</b>).</p>
+  </div>
+
+  <p class="sub" style="font-size:.82rem">Se o download não iniciar (alguns navegadores bloqueiam downloads automáticos nesta visualização), abra o <code>standalone.html</code> e use <b>Arquivo → Salvar como…</b> (<code>Cmd/Ctrl+S</code>).</p>
+</div>
+
+<!-- arquivos "dot" embutidos (podem não ser servidos pelo preview) -->
+<script type="text/plain" data-emb=".nojekyll"></script>
+<script type="text/plain" data-emb=".gitignore"># Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Dependências / editores (caso venha a usar)
+node_modules/
+.vscode/
+.idea/
+</script>
+<script type="text/plain" data-emb=".github/workflows/deploy.yml">name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+</script>
+
+<script>
+const enc=new TextEncoder();
+
+/* ---------- CRC32 ---------- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(buf){let crc=0xFFFFFFFF;for(let i=0;i<buf.length;i++)crc=(crc>>>8)^CRC_T[(crc^buf[i])&0xFF];return (crc^0xFFFFFFFF)>>>0;}
+
+/* ---------- ZIP (store, sem compressão) ---------- */
+function u16(v){return [v&0xFF,(v>>>8)&0xFF];}
+function u32(v){return [v&0xFF,(v>>>8)&0xFF,(v>>>16)&0xFF,(v>>>24)&0xFF];}
+function buildZip(files){
+  const chunks=[],central=[];let offset=0;const T=0,D=0x21; // data fixa 1980-01-01
+  for(const f of files){
+    const name=enc.encode(f.name),crc=crc32(f.data),s=f.data.length;
+    const lfh=new Uint8Array([].concat(u32(0x04034b50),u16(20),u16(0),u16(0),u16(T),u16(D),u32(crc),u32(s),u32(s),u16(name.length),u16(0)));
+    chunks.push(lfh,name,f.data);
+    const cd=new Uint8Array([].concat(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(T),u16(D),u32(crc),u32(s),u32(s),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset)));
+    central.push({head:cd,name});
+    offset+=lfh.length+name.length+s;
+  }
+  const cdStart=offset;let cdSize=0;
+  for(const c of central){chunks.push(c.head,c.name);cdSize+=c.head.length+c.name.length;}
+  chunks.push(new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),u16(central.length),u16(central.length),u32(cdSize),u32(cdStart),u16(0))));
+  let total=0;chunks.forEach(c=>total+=c.length);
+  const out=new Uint8Array(total);let p=0;chunks.forEach(c=>{out.set(c,p);p+=c.length;});
+  return out;
+}
+
+/* ---------- helpers ---------- */
+function dl(bytes,name,mime){
+  const blob=new Blob([bytes],{type:mime||'application/octet-stream'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+async function getFile(path){const r=await fetch(path);if(!r.ok)throw new Error(path+' ('+r.status+')');return new Uint8Array(await r.arrayBuffer());}
+function embedded(name){const el=document.querySelector('[data-emb="'+name+'"]');let t=el?el.textContent:'';return enc.encode(t.replace(/^\n/,''));}
+
+const LESSONS=[];for(let i=1;i<=45;i++)LESSONS.push('js/lessons/modulo-'+String(i).padStart(2,'0')+'.js');
+const FETCH=['index.html','standalone.html','README.md','js/data.js','js/progress.js'].concat(LESSONS);
+const EMBED=['.nojekyll','.gitignore','.github/workflows/deploy.yml'];
+
+/* ---------- botões ---------- */
+document.getElementById('btnZip').onclick=async function(){
+  const btn=this,st=document.getElementById('stZip');
+  btn.disabled=true;st.className='status';st.textContent='Montando o pacote…';
+  try{
+    const files=EMBED.map(n=>({name:n,data:embedded(n)}));
+    let done=0;
+    for(const p of FETCH){ files.push({name:p,data:await getFile(p)}); done++; st.textContent='Baixando arquivos… '+done+'/'+FETCH.length; }
+    st.textContent='Compactando '+files.length+' arquivos…';
+    const zip=buildZip(files);
+    dl(zip,'code-zero-full-snack-dev.zip','application/zip');
+    st.className='status ok';st.textContent='✓ Pronto! '+files.length+' arquivos ('+(zip.length/1024|0)+' KB).';
+  }catch(e){ st.className='status err';st.textContent='Erro: '+e.message+'\nTente o botão do arquivo único abaixo, ou salve a página com Cmd/Ctrl+S.'; }
+  btn.disabled=false;
+};
+document.getElementById('btnStd').onclick=async function(){
+  const btn=this,st=document.getElementById('stStd');
+  btn.disabled=true;st.className='status';st.textContent='Baixando…';
+  try{ dl(await getFile('standalone.html'),'standalone.html','text/html');st.className='status ok';st.textContent='✓ Pronto!'; }
+  catch(e){ st.className='status err';st.textContent='Erro: '+e.message+'\nAbra standalone.html e use Cmd/Ctrl+S.'; }
+  btn.disabled=false;
+};
+</script>
+</body>
+</html>
