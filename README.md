@@ -43,7 +43,7 @@ Ou, no VS Code, use a extensão **Live Server**.
 2. No repositório: **Settings → Pages**.
 3. Em **Source**, escolha **Deploy from a branch**.
 4. Selecione o branch **`main`** e a pasta **`/ (root)`** e salve.
-5. Em ~1 minuto o site fica em `https://uaibritto.github.io/codezero/`.
+5. Em ~1 minuto o site fica em `https://uaibritto.github.io/code-zero/`.
 
 O arquivo `.nojekyll` já está incluído para o site ser servido exatamente como está.
 
